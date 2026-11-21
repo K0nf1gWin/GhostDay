@@ -95,6 +95,39 @@ android/app/src/main/java/dev/ghostday/browser/
             Prefs.kt              SharedPreferences
 ```
 
+### Adblock
+
+Engine propria no dialeto Adblock Plus, em `desktop/src/main/filters.js`:
+regras de rede (`||dominio^`, ancoras, curingas, `/regex/`), opcoes
+(`$third-party`, `$script`, `$domain=`, `$important`), excecoes `@@` e filtros
+cosmeticos (`##seletor`). Cada regra e indexada por um token extraido do
+padrao, entao uma requisicao so testa as regras cujos tokens aparecem na URL,
+e nao as ~100 mil da lista.
+
+Medido com 73.600 regras de rede e 42.000 cosmeticas carregadas: **16 a 22
+microssegundos por requisicao**, ~310 ms para interpretar as listas inteiras.
+
+As listas vem de `desktop/src/main/subscriptions.js` — EasyList, EasyPrivacy,
+EasyList Brasil, Peter Lowe, uBlock filters e uBlock badware — baixadas pelo
+modulo `net` do Electron (ou seja, passam pelo proxy/Tor se estiver ligado),
+guardadas em disco e atualizadas a cada 5 dias. Da para desligar cada uma e
+importar lista local.
+
+### Ferramentas de pentest
+
+O painel tem tres abas:
+
+- **escudo** — contador de bloqueios, rota de rede, chaves de privacidade, listas
+- **rede** — toda requisicao da aba (status, tipo, host, tempo), filtravel por
+  bloqueadas / terceiros / erros; clique copia o comando `curl` equivalente com
+  os headers reais. Em cima, auditoria dos cabecalhos de seguranca do documento
+  com nota de A a F: CSP, HSTS, clickjacking, `nosniff`, Referrer-Policy,
+  Permissions-Policy, COOP, flags dos cookies e vazamento de banner do servidor
+- **recursos** — CPU e memoria por aba e por processo, com o aviso de quando
+  duas abas dividem o mesmo processo
+
+DevTools em F12.
+
 ### Como o shield entra na pagina
 
 Precisa rodar no **mundo principal**, **antes** de qualquer script do site.
@@ -116,7 +149,12 @@ sua visita em A com a visita em B. Mesma abordagem do Brave.
 
 | | Desktop | Android |
 |---|---|---|
-| Bloqueio de rastreadores (116 dominios + import) | sim | sim |
+| Adblock com EasyList e companhia (engine ABP) | **sim** | lista de dominios |
+| Filtros cosmeticos (esconde o buraco do anuncio) | **sim** | nao |
+| Log de requisicoes + copiar como curl | **sim** | nao |
+| Auditoria de cabecalhos de seguranca (nota A-F) | **sim** | nao |
+| Monitor de CPU e memoria por aba | **sim** | nao |
+| DevTools (F12) | **sim** | nao |
 | Limpeza de URL (`utm_*`, `fbclid`, `gclid`...) | sim | sim |
 | Upgrade para HTTPS | sim | sim |
 | Anti-fingerprint (canvas/WebGL/audio/navigator) | sim | sim |

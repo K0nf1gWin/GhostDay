@@ -9,7 +9,9 @@ const DEFAULTS = {
   torProxy: 'socks5://127.0.0.1:9050',
 
   // protecoes
-  blockTrackers: true,          // bloqueia dominios de rastreamento/anuncio
+  blockTrackers: true,          // bloqueia requisicoes pelas listas de filtro
+  cosmeticFilters: true,        // esconde o buraco que o anuncio deixou
+  cosmeticLimit: 10000,         // teto de seletores genericos por pagina
   stripParams: true,            // remove utm_*, fbclid, gclid... da URL
   trimReferrer: true,           // referer cross-site reduzido a origem
   httpsOnly: true,              // sobe http:// para https:// em navegacao

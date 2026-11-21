@@ -188,4 +188,9 @@ class Blocklist {
   }
 }
 
-module.exports = { Blocklist };
+/** Semente embutida em dialeto ABP, para a engine usar antes do 1o download. */
+function seedRules() {
+  return parseLines(SEED).map((h) => `||${h}^`).join('\n');
+}
+
+module.exports = { Blocklist, seedRules, SEED };

@@ -11,8 +11,8 @@
   <div id="chrome">
     <div id="tabstrip">
       <div id="tablist"></div>
-      <button id="new-tab"  class="icon" title="Nova aba (Ctrl+T)">+</button>
-      <button id="new-iso"  class="icon iso" title="Nova aba isolada (Ctrl+Shift+N)">&#9673;</button>
+      <button id="new-tab" class="icon" title="Nova aba (Ctrl+T)">+</button>
+      <button id="new-iso" class="icon iso" title="Nova aba isolada (Ctrl+Shift+N)">&#9673;</button>
     </div>
 
     <div id="toolbar">
@@ -21,50 +21,108 @@
       <button id="reload"  class="icon" title="Recarregar (F5)">&#8635;</button>
 
       <div id="omnibox">
-        <span id="scheme" class="scheme" title="Conexao"></span>
+        <span id="scheme" class="scheme"></span>
         <input id="address" type="text" spellcheck="false" autocomplete="off"
-               placeholder="Digite um endereco ou uma busca">
-        <button id="shield" class="shield" title="Privacidade desta aba">
+               placeholder="endereco ou busca">
+        <button id="shield" class="shield" title="Bloqueios nesta pagina">
           <span id="shield-count">0</span>
         </button>
       </div>
 
-      <button id="wipe" class="icon danger" title="Apagar tudo e recarregar (Ctrl+Shift+Del)">&#9003;</button>
-      <button id="gear" class="icon" title="Configuracoes">&#9881;</button>
+      <button id="devtools" class="icon" title="DevTools (F12)">&lt;/&gt;</button>
+      <button id="wipe" class="icon danger" title="Apagar tudo (Ctrl+Shift+Del)">&#9003;</button>
+      <button id="gear" class="icon" title="Painel">&#9776;</button>
     </div>
   </div>
 
-  <!-- painel de privacidade -->
-  <section id="panel" hidden>
-    <header>
-      <strong>GhostDay</strong>
+  <aside id="panel" hidden>
+    <header id="panel-head">
+      <span class="brand">GHOSTDAY</span>
+      <span class="brand-sub" id="brand-sub">v0.1.0</span>
       <button id="panel-close" class="icon">&times;</button>
     </header>
 
-    <div class="rows" id="status-rows"></div>
+    <nav id="panel-tabs">
+      <button class="ptab on" id="pt-shield" data-view="shield">escudo</button>
+      <button class="ptab"    id="pt-net"    data-view="net">rede</button>
+      <button class="ptab"    id="pt-res"    data-view="res">recursos</button>
+    </nav>
 
-    <div class="group">
-      <label class="row-label" for="proxy-mode">rota de rede</label>
-      <select id="proxy-mode">
-        <option value="direct">Direta (sem proxy)</option>
-        <option value="tor">Tor (SOCKS5 127.0.0.1:9050)</option>
-        <option value="custom">Proxy personalizado</option>
-      </select>
-      <input id="custom-proxy" type="text" placeholder="socks5://127.0.0.1:1080">
-    </div>
+    <!-- ===================== ESCUDO ===================== -->
+    <section class="view" id="view-shield">
+      <div id="hero">
+        <div class="hero-main">
+          <span id="hero-count">0</span>
+          <span class="hero-label">bloqueios nesta pagina</span>
+        </div>
+        <div class="hero-side">
+          <div><b id="hero-rules">0</b><span>regras</span></div>
+          <div><b id="hero-session">0</b><span>na sessao</span></div>
+        </div>
+      </div>
 
-    <div class="group" id="toggles"></div>
+      <div class="rows" id="status-rows"></div>
 
-    <div class="group actions">
-      <button id="load-list" class="wide">Carregar lista de bloqueio...</button>
-      <button id="wipe-2" class="wide danger-outline">Apagar cookies, cache e storage</button>
-    </div>
+      <div class="group">
+        <div class="row-label">rota de rede</div>
+        <select id="proxy-mode">
+          <option value="direct">direta (sem proxy)</option>
+          <option value="tor">tor — socks5://127.0.0.1:9050</option>
+          <option value="custom">proxy personalizado</option>
+        </select>
+        <input id="custom-proxy" type="text" placeholder="socks5://127.0.0.1:1080">
+      </div>
 
-    <p class="note">
-      Reduz rastreamento e correlacao entre sites. <strong>Nao e anonimato:</strong>
-      para nao ser ligado a sua identidade, Tor Browser sem modificacoes.
-    </p>
-  </section>
+      <div class="group" id="toggles"></div>
+
+      <div class="group">
+        <div class="row-label">
+          listas de filtro
+          <button id="lists-update" class="mini">atualizar</button>
+          <button id="lists-import" class="mini">importar</button>
+        </div>
+        <div id="lists"></div>
+      </div>
+
+      <div class="group actions">
+        <button id="wipe-2" class="wide danger-outline">apagar cookies, cache e storage</button>
+      </div>
+
+      <p class="note">
+        Reduz rastreamento e correlacao entre sites. <strong>Nao e anonimato:</strong>
+        para nao ser ligado a sua identidade, Tor Browser sem modificacoes.
+      </p>
+    </section>
+
+    <!-- ====================== REDE ====================== -->
+    <section class="view" id="view-net" hidden>
+      <div id="audit"></div>
+
+      <div class="chips" id="net-chips">
+        <button class="chip on" data-only="all">tudo</button>
+        <button class="chip" data-only="blocked">bloqueadas</button>
+        <button class="chip" data-only="thirdParty">terceiros</button>
+        <button class="chip" data-only="errors">erros</button>
+        <button class="chip right" id="net-clear">limpar</button>
+      </div>
+
+      <div id="net-summary" class="net-summary"></div>
+      <div id="net-list" class="net-list"></div>
+      <p class="note">Clique numa requisicao para copiar o comando curl equivalente.</p>
+    </section>
+
+    <!-- ==================== RECURSOS ==================== -->
+    <section class="view" id="view-res" hidden>
+      <div id="res-totals" class="totals"></div>
+      <div class="row-label">por aba</div>
+      <div id="res-tabs" class="res-list"></div>
+      <div class="row-label">processos</div>
+      <div id="res-procs" class="res-list"></div>
+      <p class="note">
+        Abas do mesmo site dividem um processo: ali a CPU e do processo, nao da aba.
+      </p>
+    </section>
+  </aside>
 
   <div id="toast" hidden></div>
 

@@ -15,11 +15,12 @@ class TabManager {
    * @param {Blocklist} o.blocklist
    * @param {Function} o.onChange            avisa a UI que o estado mudou
    */
-  constructor({ win, chromeHeight, config, blocklist, onChange }) {
+  constructor({ win, chromeHeight, config, engine, netlog, onChange }) {
     this.win = win;
     this.chromeHeight = chromeHeight;
     this.config = config;
-    this.blocklist = blocklist;
+    this.engine = engine;
+    this.netlog = netlog;
     this.onChange = onChange || (() => {});
     this.tabs = new Map();
     this.activeId = null;
@@ -46,7 +47,8 @@ class TabManager {
     const sess = electronSession.fromPartition(partition);
     hardenSession(sess, {
       config: this.config,
-      blocklist: this.blocklist,
+      engine: this.engine,
+      netlog: this.netlog,
       onBlocked: (details) => this.countBlock(details.webContentsId),
     });
     await applyProxy(sess, this.config);
@@ -147,6 +149,41 @@ class TabManager {
     }
   }
 
+  /** Injeta o CSS das regras cosmeticas da lista para o site atual. */
+  applyCosmetic(tab) {
+    if (!this.config.get('cosmeticFilters') || !this.config.get('blockTrackers')) return;
+    const wc = tab.view.webContents;
+    if (wc.isDestroyed()) return;
+
+    let hostname = '';
+    try { hostname = new URL(wc.getURL()).hostname; } catch { return; }
+    if (!hostname) return;
+
+    const parts = [
+      this.engine.genericCss(this.config.get('cosmeticLimit')),
+      this.engine.cosmeticCssFor(hostname),
+    ].filter(Boolean);
+    if (!parts.length) return;
+
+    wc.insertCSS(parts.join('\n'), { cssOrigin: 'user' })
+      .catch((err) => console.error('[cosmetico]', err.message));
+  }
+
+  /** DevTools em janela separada: a WebContentsView nao comporta o modo acoplado. */
+  toggleDevTools() {
+    return this.withActive((wc) => {
+      if (wc.isDevToolsOpened()) wc.closeDevTools();
+      else wc.openDevTools({ mode: 'detach' });
+    });
+  }
+
+  /** webContents da aba ativa, para o log de rede. */
+  activeWebContentsId() {
+    const tab = this.active();
+    if (!tab || tab.view.webContents.isDestroyed()) return 0;
+    return tab.view.webContents.id;
+  }
+
   countBlock(webContentsId) {
     for (const tab of this.tabs.values()) {
       if (!tab.view.webContents.isDestroyed() && tab.view.webContents.id === webContentsId) {
@@ -169,6 +206,9 @@ class TabManager {
       tab.secure = tab.url.startsWith('https://');
       this.emit();
     };
+
+    // Filtros cosmeticos: esconde o espaco que o anuncio bloqueado deixaria.
+    wc.on('dom-ready', () => this.applyCosmetic(tab));
 
     wc.on('did-start-loading', () => { tab.loading = true; this.emit(); });
     wc.on('did-stop-loading', () => { tab.loading = false; sync(); });
@@ -226,6 +266,7 @@ class TabManager {
       if (wc.debugger.isAttached()) wc.debugger.detach();
     } catch { /* ja solto */ }
 
+    if (this.netlog && !wc.isDestroyed()) this.netlog.clear(wc.id);
     this.win.contentView.removeChildView(tab.view);
     if (!wc.isDestroyed()) wc.close();
     this.tabs.delete(id);
@@ -294,6 +335,7 @@ class TabManager {
       activeId: this.activeId,
       tabs: [...this.tabs.values()].map((t) => ({
         id: t.id,
+        wcId: t.view.webContents.isDestroyed() ? 0 : t.view.webContents.id,
         title: t.title,
         url: t.url,
         loading: t.loading,

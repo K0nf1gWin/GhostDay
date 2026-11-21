@@ -1,4 +1,5 @@
 'use strict';
+const { TYPE_MAP } = require('./filters');
 
 /* ------------------------------------------------------------------ *
  * 1. Switches do Chromium (precisam ser aplicados antes do app.ready)
@@ -123,8 +124,8 @@ function siteOf(hostname) {
   return TWO_LEVEL.has(last2) ? parts.slice(-3).join('.') : last2;
 }
 
-function siteOfUrl(rawUrl) {
-  try { return siteOf(new URL(rawUrl).hostname); } catch { return ''; }
+function hostOf(rawUrl) {
+  try { return new URL(rawUrl).hostname.toLowerCase(); } catch { return ''; }
 }
 
 /** URL da aba que originou a requisicao (para saber se e cross-site). */
@@ -132,8 +133,7 @@ function initiatorUrl(details) {
   if (details.referrer) return details.referrer;
   if (details.webContentsId != null) {
     // require tardio: mantem este modulo testavel fora do Electron
-    const { webContents } = require('electron');
-    const wc = webContents.fromId(details.webContentsId);
+        const wc = webContents.fromId(details.webContentsId);
     if (wc && !wc.isDestroyed()) return wc.getURL();
   }
   return '';
@@ -143,7 +143,7 @@ function initiatorUrl(details) {
  * 5. Hardening da sessao
  * ------------------------------------------------------------------ */
 
-function hardenSession(session, { config, blocklist, onBlocked }) {
+function hardenSession(session, { config, engine, netlog, onBlocked }) {
   if (session.__ghostdayHardened) return;
   session.__ghostdayHardened = true;
 
@@ -153,11 +153,38 @@ function hardenSession(session, { config, blocklist, onBlocked }) {
     session.setUserAgent(genericUserAgent(), ACCEPT_LANGUAGES);
   }
 
+  /** Contexto que a engine de filtros precisa para decidir. */
+  const contextOf = (details) => {
+    const hostname = hostOf(details.url);
+    const originUrl = initiatorUrl(details);
+    const originHost = hostOf(originUrl);
+    const originSite = siteOf(originHost);
+    const targetSite = siteOf(hostname);
+    return {
+      type: TYPE_MAP[details.resourceType] || 'other',
+      hostname,
+      originHost,
+      originSite,
+      thirdParty: Boolean(originSite) && Boolean(targetSite) && originSite !== targetSite,
+    };
+  };
+
   /* --- bloqueio, limpeza de URL e upgrade de esquema --- */
   session.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
     const isTop = details.resourceType === 'mainFrame';
+    const ctx = contextOf(details);
+    const verdict = { block: false, reason: '', thirdParty: ctx.thirdParty };
 
-    if (config.get('blockTrackers') && !isTop && blocklist.shouldBlock(details.url)) {
+    // Navegacao direta nunca e bloqueada: so sub-recursos.
+    if (config.get('blockTrackers') && !isTop) {
+      const hit = engine.match(details.url, ctx);
+      verdict.block = hit.block;
+      verdict.reason = hit.reason;
+    }
+
+    netlog.start(details.webContentsId, details, verdict);
+
+    if (verdict.block) {
       if (onBlocked) onBlocked(details);
       return callback({ cancel: true });
     }
@@ -179,23 +206,21 @@ function hardenSession(session, { config, blocklist, onBlocked }) {
   /* --- headers de saida: referer e cookies de terceiros --- */
   session.webRequest.onBeforeSendHeaders({ urls: ['<all_urls>'] }, (details, callback) => {
     const headers = { ...details.requestHeaders };
-    const targetSite = siteOfUrl(details.url);
-    const fromSite = siteOfUrl(initiatorUrl(details));
-    const crossSite = Boolean(fromSite) && Boolean(targetSite) && fromSite !== targetSite;
+    const ctx = contextOf(details);
 
     if (config.get('trimReferrer') && headers.Referer) {
-      const refSite = siteOfUrl(headers.Referer);
-      if (refSite && refSite !== targetSite) {
+      const refSite = siteOf(hostOf(headers.Referer));
+      if (refSite && refSite !== siteOf(ctx.hostname)) {
         try { headers.Referer = new URL(headers.Referer).origin + '/'; }
         catch { delete headers.Referer; }
       }
     }
 
-    if (config.get('blockThirdPartyCookies') && crossSite) {
+    if (config.get('blockThirdPartyCookies') && ctx.thirdParty) {
       delete headers.Cookie;
     }
 
-    // Cabecalhos de identificacao que o Chromium manda por padrao.
+    // Client hints de alta entropia que o Chromium manda por padrao.
     delete headers['X-Requested-With'];
     delete headers['sec-ch-ua-full-version-list'];
     delete headers['sec-ch-ua-arch'];
@@ -203,15 +228,20 @@ function hardenSession(session, { config, blocklist, onBlocked }) {
     delete headers['sec-ch-ua-model'];
     delete headers['sec-ch-ua-platform-version'];
 
+    netlog.headers(details.id, headers);
     callback({ requestHeaders: headers });
   });
 
-  /* --- headers de entrada: nao aceita Set-Cookie de terceiro --- */
+  /* --- headers de entrada: auditoria e cookies de terceiro --- */
   session.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
+    if (details.resourceType === 'mainFrame') {
+      netlog.setAudit(details.webContentsId, details.url, details.responseHeaders);
+    }
+
     if (!config.get('blockThirdPartyCookies')) return callback({});
-    const targetSite = siteOfUrl(details.url);
-    const fromSite = siteOfUrl(initiatorUrl(details));
-    if (fromSite && targetSite && fromSite !== targetSite && details.responseHeaders) {
+
+    const ctx = contextOf(details);
+    if (ctx.thirdParty && details.responseHeaders) {
       const headers = { ...details.responseHeaders };
       for (const key of Object.keys(headers)) {
         if (key.toLowerCase() === 'set-cookie') delete headers[key];
@@ -219,6 +249,15 @@ function hardenSession(session, { config, blocklist, onBlocked }) {
       return callback({ responseHeaders: headers });
     }
     callback({});
+  });
+
+  /* --- fim de vida da requisicao, para o log --- */
+  session.webRequest.onCompleted({ urls: ['<all_urls>'] }, (details) => {
+    netlog.finish(details.id, details);
+  });
+
+  session.webRequest.onErrorOccurred({ urls: ['<all_urls>'] }, (details) => {
+    netlog.fail(details.id, details.error);
   });
 
   /* --- permissoes: nega por padrao --- */
@@ -232,7 +271,7 @@ function hardenSession(session, { config, blocklist, onBlocked }) {
     return ALWAYS_OK.has(permission);
   });
 
-  // Nao autoriza nenhum dispositivo (HID/serial/USB/bluetooth).
+  // Nenhum dispositivo (HID/serial/USB/bluetooth) e autorizado.
   session.setDevicePermissionHandler(() => false);
   session.setBluetoothPairingHandler((details, callback) => callback({ cancel: true }));
 }
@@ -293,5 +332,6 @@ module.exports = {
   cleanUrl,
   upgradeUrl,
   siteOf,
+  hostOf,
   TRACKING_PARAMS,
 };
