@@ -79,14 +79,17 @@ jobs:
     name: Publicar em "latest"
     needs: [android, windows]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    # always(): publica o que deu certo mesmo se um dos builds falhar — um erro
+    # no Windows nao pode deixar o APK preso dentro do run.
+    if: always() && !cancelled() && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: artifacts
 
       - name: Listar o que saiu
-        run: find artifacts -type f | sort
+        run: find artifacts -type f | sort || echo 'nenhum artefato'
 
       - uses: softprops/action-gh-release@v2
         with:
@@ -104,4 +107,5 @@ jobs:
             SmartScreen (Mais informacoes -> Executar assim mesmo) e o Android
             vai pedir confirmacao de origem desconhecida.
           prerelease: true
+          fail_on_unmatched_files: false
           files: artifacts/**/*
