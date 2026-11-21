@@ -23,8 +23,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # packages: '' impede a action de instalar o pacote legado "tools", que o
+      # Google removeu do repositorio do SDK — o sdkmanager falha com
+      # "Failed to find package 'tools'" e o job inteiro morre antes do Gradle.
+      # Os componentes reais vao no passo seguinte.
       - name: SDK do Android
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''
 
       - name: Componentes do SDK
         run: |
