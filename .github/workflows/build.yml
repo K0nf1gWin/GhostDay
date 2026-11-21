@@ -1,0 +1,107 @@
+name: build
+
+# Gera .apk (Android), .exe e .msi (Windows) a cada push na main,
+# e publica tudo numa release rolante chamada "latest".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    name: APK (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: SDK do Android
+        uses: android-actions/setup-android@v3
+
+      # O repo nao traz gradle-wrapper.jar (binario), entao usamos o Gradle
+      # da action direto, sem wrapper.
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Montar APK de debug
+        working-directory: android
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Renomear
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/*.apk out/GhostDay-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GhostDay-apk
+          path: out/*.apk
+          if-no-files-found: error
+
+  windows:
+    name: EXE e MSI (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Montar instaladores
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'   # sem assinatura de codigo
+        run: npx electron-builder --win nsis msi --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GhostDay-windows
+          path: |
+            dist/*.exe
+            dist/*.msi
+          if-no-files-found: error
+
+  release:
+    name: Publicar em "latest"
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Listar o que saiu
+        run: find artifacts -type f | sort
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: GhostDay (build mais recente)
+          body: |
+            Build automatico do commit ${{ github.sha }}.
+
+            - `GhostDay-debug.apk` — Android, assinado com a chave de debug.
+              Permita "instalar de fontes desconhecidas" para instalar.
+            - `GhostDay-0.1.0-x64.exe` — instalador NSIS do Windows.
+            - `GhostDay-0.1.0-x64.msi` — instalador MSI do Windows.
+
+            Nenhum dos instaladores e assinado: o Windows vai mostrar aviso do
+            SmartScreen (Mais informacoes -> Executar assim mesmo) e o Android
+            vai pedir confirmacao de origem desconhecida.
+          prerelease: true
+          files: artifacts/**/*

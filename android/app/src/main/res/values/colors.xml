@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#07090B</color>
+    <color name="bg2">#0B1013</color>
+    <color name="bg3">#111B1A</color>
+    <color name="omnibox">#05070A</color>
+
+    <color name="fg">#D9FFE9</color>
+    <color name="fg_dim">#5D8C77</color>
+    <color name="fg_mute">#39594B</color>
+
+    <color name="acc">#00E676</color>
+    <color name="acc_hi">#5BFFB0</color>
+    <color name="acc_lo">#00A85A</color>
+
+    <color name="warn">#FFB020</color>
+    <color name="danger">#FF4D5E</color>
+    <color name="line">#16271F</color>
+    <color name="line_hi">#1F3C30</color>
+
+    <color name="ic_launcher_background">#07090B</color>
+</resources>

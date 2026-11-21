@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GhostDay</string>
+    <string name="address_hint">endereco ou busca</string>
+    <string name="cd_back">voltar</string>
+    <string name="cd_forward">avancar</string>
+    <string name="cd_reload">recarregar</string>
+    <string name="cd_tabs">abas</string>
+    <string name="cd_panel">privacidade</string>
+    <string name="panel_title">GhostDay</string>
+    <string name="route">rota de rede</string>
+    <string name="wipe">apagar cookies, cache e storage</string>
+    <string name="disclaimer">Reduz rastreamento e correlacao entre sites. Nao e anonimato: para nao ser ligado a sua identidade, use o Tor Browser.</string>
+</resources>

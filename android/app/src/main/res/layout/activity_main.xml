@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- omnibox -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@color/bg"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_omnibox"
+                android:paddingStart="10dp"
+                android:paddingEnd="5dp">
+
+                <TextView
+                    android:id="@+id/scheme"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="9sp"
+                    android:fontFamily="monospace"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:textColor="@color/acc"
+                    android:paddingEnd="7dp"/>
+
+                <EditText
+                    android:id="@+id/address"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="@string/address_hint"
+                    android:imeOptions="actionGo"
+                    android:inputType="textUri|textNoSuggestions"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/fg"
+                    android:textColorHighlight="@color/acc_lo"
+                    android:textCursorDrawable="@null"
+                    android:importantForAutofill="no"
+                    android:autofillHints=""/>
+
+                <TextView
+                    android:id="@+id/shield"
+                    android:layout_width="wrap_content"
+                    android:layout_height="26dp"
+                    android:minWidth="34dp"
+                    android:gravity="center"
+                    android:background="@drawable/bg_chip"
+                    android:textSize="10sp"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/fg_mute"
+                    android:text="0"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/acc"
+            android:progressDrawable="@drawable/progress_bar"
+            android:visibility="invisible"/>
+
+        <!-- paginas -->
+        <FrameLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/bg"/>
+
+        <!-- barra inferior -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@color/bg2"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                style="@style/GhostIconButton"
+                android:src="@drawable/ic_back"
+                android:contentDescription="@string/cd_back"/>
+
+            <ImageButton
+                android:id="@+id/btn_forward"
+                style="@style/GhostIconButton"
+                android:src="@drawable/ic_forward"
+                android:contentDescription="@string/cd_forward"/>
+
+            <ImageButton
+                android:id="@+id/btn_reload"
+                style="@style/GhostIconButton"
+                android:src="@drawable/ic_reload"
+                android:contentDescription="@string/cd_reload"/>
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <FrameLayout
+                android:id="@+id/btn_tabs"
+                android:layout_width="38dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_chip"
+                android:contentDescription="@string/cd_tabs">
+
+                <TextView
+                    android:id="@+id/tab_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/acc"
+                    android:text="1"/>
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/btn_panel"
+                style="@style/GhostIconButton"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_sliders"
+                android:contentDescription="@string/cd_panel"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- painel de privacidade -->
+    <ScrollView
+        android:id="@+id/panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_panel"
+        android:visibility="gone"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="[ GHOSTDAY ]"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.15"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/acc"/>
+
+                <Button
+                    android:id="@+id/btn_panel_close"
+                    android:layout_width="34dp"
+                    android:layout_height="30dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:background="@drawable/bg_button"
+                    android:text="x"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/fg_dim"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/line"/>
+
+            <LinearLayout
+                android:id="@+id/status_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/line"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/route"
+                android:textSize="9sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.13"
+                android:fontFamily="monospace"
+                android:textColor="@color/fg_mute"
+                android:paddingTop="10dp"
+                android:paddingBottom="6dp"/>
+
+            <TextView
+                android:id="@+id/proxy_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:textColor="@color/fg_dim"
+                android:paddingBottom="8dp"
+                android:text="direta"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_proxy_direct"
+                    style="@style/GhostWideButton"
+                    android:layout_weight="1"
+                    android:text="direto"/>
+
+                <Button
+                    android:id="@+id/btn_proxy_tor"
+                    style="@style/GhostWideButton"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="tor"/>
+
+                <Button
+                    android:id="@+id/btn_proxy_custom"
+                    style="@style/GhostWideButton"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="proxy..."/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:background="@color/line"/>
+
+            <LinearLayout
+                android:id="@+id/toggle_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="6dp"/>
+
+            <Button
+                android:id="@+id/btn_wipe"
+                style="@style/GhostWideButton"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_button_danger"
+                android:textColor="@color/danger"
+                android:text="@string/wipe"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/disclaimer"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.4"
+                android:fontFamily="monospace"
+                android:textColor="@color/fg_mute"
+                android:paddingTop="14dp"/>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

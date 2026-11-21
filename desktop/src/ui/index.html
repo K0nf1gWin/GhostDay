@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:;">
+<title>GhostDay</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="chrome">
+    <div id="tabstrip">
+      <div id="tablist"></div>
+      <button id="new-tab"  class="icon" title="Nova aba (Ctrl+T)">+</button>
+      <button id="new-iso"  class="icon iso" title="Nova aba isolada (Ctrl+Shift+N)">&#9673;</button>
+    </div>
+
+    <div id="toolbar">
+      <button id="back"    class="icon" title="Voltar (Alt+&larr;)">&#8592;</button>
+      <button id="forward" class="icon" title="Avancar (Alt+&rarr;)">&#8594;</button>
+      <button id="reload"  class="icon" title="Recarregar (F5)">&#8635;</button>
+
+      <div id="omnibox">
+        <span id="scheme" class="scheme" title="Conexao"></span>
+        <input id="address" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Digite um endereco ou uma busca">
+        <button id="shield" class="shield" title="Privacidade desta aba">
+          <span id="shield-count">0</span>
+        </button>
+      </div>
+
+      <button id="wipe" class="icon danger" title="Apagar tudo e recarregar (Ctrl+Shift+Del)">&#9003;</button>
+      <button id="gear" class="icon" title="Configuracoes">&#9881;</button>
+    </div>
+  </div>
+
+  <!-- painel de privacidade -->
+  <section id="panel" hidden>
+    <header>
+      <strong>GhostDay</strong>
+      <button id="panel-close" class="icon">&times;</button>
+    </header>
+
+    <div class="rows" id="status-rows"></div>
+
+    <div class="group">
+      <label class="row-label" for="proxy-mode">rota de rede</label>
+      <select id="proxy-mode">
+        <option value="direct">Direta (sem proxy)</option>
+        <option value="tor">Tor (SOCKS5 127.0.0.1:9050)</option>
+        <option value="custom">Proxy personalizado</option>
+      </select>
+      <input id="custom-proxy" type="text" placeholder="socks5://127.0.0.1:1080">
+    </div>
+
+    <div class="group" id="toggles"></div>
+
+    <div class="group actions">
+      <button id="load-list" class="wide">Carregar lista de bloqueio...</button>
+      <button id="wipe-2" class="wide danger-outline">Apagar cookies, cache e storage</button>
+    </div>
+
+    <p class="note">
+      Reduz rastreamento e correlacao entre sites. <strong>Nao e anonimato:</strong>
+      para nao ser ligado a sua identidade, Tor Browser sem modificacoes.
+    </p>
+  </section>
+
+  <div id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#5bffb0"/>
+      <stop offset="0.55" stop-color="#00e676"/>
+      <stop offset="1"    stop-color="#00a85a"/>
+    </linearGradient>
+  </defs>
+  <!-- zona segura do adaptive icon: conteudo dentro do circulo central de 72dp -->
+  <g transform="translate(54 54) scale(0.1055) translate(-256 -256)">
+    <path d="M256 92c-66 0-120 54-120 120v148c0 14 16 21 26 12l22-20c7-6 17-6 24 0l22 20c7 6 17 6 24 0
+             l22-20c7-6 17-6 24 0l22 20c10 9 26 2 26-12V212c0-66-54-120-120-120z"
+          fill="url(#glow)"/>
+    <rect x="176" y="196" width="160" height="56" rx="12" fill="#04070a" opacity="0.92"/>
+    <g fill="#5bffb0">
+      <rect x="196" y="217" width="26" height="14" rx="3"/>
+      <rect x="290" y="217" width="26" height="14" rx="3"/>
+    </g>
+    <g stroke="#04070a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M208 286l24 22-24 22"/>
+      <path d="M256 330h46"/>
+    </g>
+  </g>
+</svg>

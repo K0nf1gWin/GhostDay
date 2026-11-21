@@ -1,0 +1,62 @@
+{
+  "name": "ghostday",
+  "productName": "GhostDay",
+  "version": "0.1.0",
+  "description": "Navegador de privacidade para pentest e red team - desktop e Android",
+  "main": "desktop/src/main/main.js",
+  "author": "GhostDay",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "dist:exe": "electron-builder --win nsis",
+    "dist:msi": "electron-builder --win msi"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.ghostday.browser",
+    "productName": "GhostDay",
+    "copyright": "GhostDay",
+    "files": [
+      "desktop/src/**/*",
+      "shared/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "msi",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "GhostDay-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "shortcutName": "GhostDay"
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false,
+      "shortcutName": "GhostDay"
+    }
+  }
+}
