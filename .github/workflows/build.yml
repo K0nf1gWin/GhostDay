@@ -26,6 +26,12 @@ jobs:
       - name: SDK do Android
         uses: android-actions/setup-android@v3
 
+      - name: Componentes do SDK
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+
       # O repo nao traz gradle-wrapper.jar (binario), entao usamos o Gradle
       # da action direto, sem wrapper.
       - name: Gradle
@@ -35,7 +41,28 @@ jobs:
 
       - name: Montar APK de debug
         working-directory: android
-        run: gradle assembleDebug --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      # Sem acesso a API do Actions do outro lado, o log vai para uma branch do
+      # proprio repo, que da para ler por git.
+      - name: Publicar log do erro
+        if: failure()
+        shell: bash
+        env:
+          CI_TOKEN: ${{ github.token }}
+        run: |
+          work="$RUNNER_TEMP/logrepo"
+          rm -rf "$work" && mkdir -p "$work"
+          tail -c 120000 "$RUNNER_TEMP/build.log" > "$work/android.log" 2>/dev/null || \
+            echo "sem log: a falha foi antes do gradle" > "$work/android.log"
+          cd "$work"
+          git init -q -b ci-log-android
+          git add -A
+          git -c user.email=ci@local -c user.name=ci commit -qm "android run ${{ github.run_number }}"
+          git push -f "https://x-access-token:${CI_TOKEN}@github.com/${{ github.repository }}.git" ci-log-android
 
       - name: Renomear
         run: |
@@ -63,9 +90,28 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Montar instaladores
+        shell: bash
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'   # sem assinatura de codigo
-        run: npx electron-builder --win nsis msi --publish never
+        run: |
+          set -o pipefail
+          npx electron-builder --win nsis msi --publish never 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Publicar log do erro
+        if: failure()
+        shell: bash
+        env:
+          CI_TOKEN: ${{ github.token }}
+        run: |
+          work="$RUNNER_TEMP/logrepo"
+          rm -rf "$work" && mkdir -p "$work"
+          tail -c 120000 "$RUNNER_TEMP/build.log" > "$work/windows.log" 2>/dev/null || \
+            echo "sem log: a falha foi antes do electron-builder" > "$work/windows.log"
+          cd "$work"
+          git init -q -b ci-log-windows
+          git add -A
+          git -c user.email=ci@local -c user.name=ci commit -qm "windows run ${{ github.run_number }}"
+          git push -f "https://x-access-token:${CI_TOKEN}@github.com/${{ github.repository }}.git" ci-log-windows
 
       - uses: actions/upload-artifact@v4
         with:
